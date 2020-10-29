@@ -1,0 +1,17 @@
+[package]
+name = "counter"
+version = "0.1.0"
+authors = ["Tyler Parker <tparker@computemachines.com>"]
+edition = "2018"
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[build]
+target = "armv7-unknown-linux-gnueabihf"
+
+[dependencies]
+libremarkable = "0.4.1"
+iced_native = "0.2.2"
+iced_remarkable = { path = "../.." }
+
