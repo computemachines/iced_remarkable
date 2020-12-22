@@ -8,3 +8,6 @@ rustflags = [
   "-C", "link-arg=-mcpu=cortex-a9",
   "-C", "link-arg=--sysroot=/usr/local/oecore-x86_64/sysroots/cortexa9hf-neon-oe-linux-gnueabi/",
 ]
+
+[build]
+target = "armv7-unknown-linux-gnueabihf"

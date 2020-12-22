@@ -1,12 +1,23 @@
+#![allow(dead_code, unused_variables)]
+
 use cgmath::Point2;
 use iced_native::renderer::Renderer;
 use iced_native::widget::{button, text};
-use libremarkable::framebuffer::{common::color, core::Framebuffer};
+use libremarkable::framebuffer::{common::color, core::Framebuffer, FramebufferBase};
 
-#[derive(Default)]
-pub struct RemarkableRenderer;
+pub struct RemarkableRenderer<'a> {
+    framebuffer: Framebuffer<'a>,
+}
 
-#[derive(Debug)]
+impl Default for RemarkableRenderer<'_> {
+    fn default() -> Self {
+        Self {
+            framebuffer: Framebuffer::new("/dev/fb0"),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub enum Primitive {
     Line(Point2<u32>, u32, color),
     Text(String),
@@ -17,22 +28,23 @@ pub enum Primitive {
 #[derive(Default)]
 pub struct Style;
 
-impl RemarkableRenderer {
+impl RemarkableRenderer<'_> {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn render(&mut self, framebuffer: &mut Framebuffer, primitive: &Primitive) {
+    pub fn render(&mut self, primitive: &Primitive) {
+        // draw to self.framebuffer
         dbg!(primitive);
     }
 }
 
-impl Renderer for RemarkableRenderer {
+impl Renderer for RemarkableRenderer<'_> {
     type Output = Primitive;
 
     type Defaults = Style;
 }
 
-impl button::Renderer for RemarkableRenderer {
+impl button::Renderer for RemarkableRenderer<'_> {
     const DEFAULT_PADDING: u16 = 0;
 
     type Style = Style;
@@ -48,11 +60,14 @@ impl button::Renderer for RemarkableRenderer {
         content: &iced_native::Element<'_, Message, Self>,
         content_layout: iced_native::Layout<'_>,
     ) -> Self::Output {
-        Primitive::Line((100, 100).into(), 5, color::BLACK)
+        dbg!(bounds);
+        let outline = Primitive::Line((100, 100).into(), 5, color::BLACK);
+        let inner = content.draw(self, defaults, content_layout, cursor_position);
+        Primitive::Group(vec![outline, inner])
     }
 }
 
-impl text::Renderer for RemarkableRenderer {
+impl text::Renderer for RemarkableRenderer<'_> {
     const DEFAULT_SIZE: u16 = 0;
 
     fn measure(
@@ -62,9 +77,9 @@ impl text::Renderer for RemarkableRenderer {
         font: iced_core::Font,
         bounds: iced_core::Size,
     ) -> (f32, f32) {
+        println!("measure({})", content);
         (100.0, 20.0)
     }
-
     fn draw(
         &mut self,
         defaults: &Self::Defaults,

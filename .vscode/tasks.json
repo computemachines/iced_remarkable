@@ -1,0 +1,41 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "watch cargo-cross check",
+			"type": "shell",
+			"command": "./scripts/cross-cargo.sh ${relativeFileDirname}",
+			"isBackground": true,
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "never",
+			},
+			"problemMatcher": [
+				{
+					"owner": "rust",
+					"fileLocation": [
+						"relative",
+						"${workspaceFolder}"
+					],
+					"pattern": {
+						"regexp": "^(.*):(\\d+):(\\d+):\\s(warning|error)(?:\\[E\\d+\\])?:\\s(.*)",
+						"file": 1,
+						"line": 2,
+						"column": 3,
+						"severity": 4,
+						"message": 5,
+					},
+					"background": {
+						"activeOnStart": true,
+						"beginsPattern": "^\\[Running 'cargo check",
+						"endsPattern": "^\\[Finished running. Exit status: \\d+",
+					}
+				}
+			]
+		}
+	]
+}
