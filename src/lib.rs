@@ -41,7 +41,7 @@ impl RemarkableRenderer<'_> {
 impl Renderer for RemarkableRenderer<'_> {
     type Output = Primitive;
 
-    type Defaults = Style;
+    type Defaults = ();
 }
 
 impl button::Renderer for RemarkableRenderer<'_> {
