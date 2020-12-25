@@ -3,7 +3,12 @@
 use cgmath::Point2;
 use iced_native::renderer::Renderer;
 use iced_native::widget::{button, text};
-use libremarkable::framebuffer::{common::color, core::Framebuffer, FramebufferBase};
+use libremarkable::framebuffer::{
+    common::{color, display_temp, dither_mode, mxcfb_rect, waveform_mode},
+    core::Framebuffer,
+    refresh::PartialRefreshMode,
+    FramebufferBase, FramebufferRefresh,
+};
 
 pub struct RemarkableRenderer<'a> {
     framebuffer: Framebuffer<'a>,
@@ -35,6 +40,26 @@ impl RemarkableRenderer<'_> {
     pub fn render(&mut self, primitive: &Primitive) {
         // draw to self.framebuffer
         dbg!(primitive);
+    }
+    pub fn update_full(&self) {
+        self.framebuffer.full_refresh(
+            waveform_mode::WAVEFORM_MODE_GC16,
+            display_temp::TEMP_USE_REMARKABLE_DRAW,
+            dither_mode::EPDC_FLAG_USE_REMARKABLE_DITHER,
+            0,
+            true,
+        );
+    }
+    pub fn update_partial(&self, region: &mxcfb_rect) {
+        self.framebuffer.partial_refresh(
+            region,
+            PartialRefreshMode::Async,
+            waveform_mode::WAVEFORM_MODE_GLR16,
+            display_temp::TEMP_USE_REMARKABLE_DRAW,
+            dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
+            0,
+            false,
+        );
     }
 }
 
