@@ -10,6 +10,7 @@ edition = "2018"
 libremarkable = "0.4.1"
 iced_core = "0.2.1"
 iced_native = "0.2.2"
+iced_graphics = "0.1.0"
 cgmath = "0.17.0"
 
 [workspace]

@@ -10,5 +10,6 @@ publish = false
 
 [dependencies]
 libremarkable = "0.4.1"
-iced_native = "0.2.2"
+iced_native = "0.3.0"
 iced_remarkable = { path = "../.." }
+iced_graphics = "0.1.0"
