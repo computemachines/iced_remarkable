@@ -2,11 +2,14 @@ use iced_graphics::backend::{Backend, Text};
 use iced_graphics::Primitive;
 
 use libremarkable::framebuffer::{
-    common::{color, display_temp, dither_mode, mxcfb_rect, waveform_mode},
+    common::{display_temp, dither_mode, mxcfb_rect, waveform_mode},
     core::Framebuffer,
     refresh::PartialRefreshMode,
     FramebufferBase, FramebufferRefresh,
 };
+
+pub const DISPLAYWIDTH: u16 = 1404;
+pub const DISPLAYHEIGHT: u16 = 1872;
 
 pub struct RemarkableBackend<'a> {
     framebuffer: Framebuffer<'a>,
@@ -36,6 +39,9 @@ impl Text for RemarkableBackend<'_> {
         font: iced_graphics::Font,
         bounds: iced_graphics::Size,
     ) -> (f32, f32) {
+        dbg!(contents);
+        dbg!(size);
+        dbg!(&bounds);
         (contents.len() as f32 * size, size)
     }
 }

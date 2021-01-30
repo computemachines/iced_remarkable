@@ -1,3 +1,4 @@
 /target
 Cargo.lock
 .installed
+workspace.code-workspace
