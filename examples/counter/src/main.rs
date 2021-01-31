@@ -20,7 +20,10 @@ impl Application for CounterApp {
         )
     }
 
-    fn update(&mut self, messages: Vec<Self::Message>) -> Vec<iced_native::Command<Self::Message>> {
+    fn update(
+        &mut self,
+        _messages: Vec<Self::Message>,
+    ) -> Vec<iced_native::Command<Self::Message>> {
         println!("counterApp.update",);
         vec![]
     }

@@ -24,7 +24,7 @@ impl Counter {
             .push(
                 // The increment button. We tell it to produce an
                 // `IncrementPressed` message when pressed
-                Button::new(&mut self.increment_button, Text::new("+"))
+                Button::new(&mut self.increment_button, Text::new("increment +"))
                     .on_press(Message::IncrementPressed),
             )
             .push(
@@ -34,12 +34,12 @@ impl Counter {
             .push(
                 // The decrement button. We tell it to produce a
                 // `DecrementPressed` message when pressed
-                Button::new(&mut self.decrement_button, Text::new("-"))
+                Button::new(&mut self.decrement_button, Text::new("decrement -"))
                     .on_press(Message::DecrementPressed),
             )
         // Text::new(&self.value.to_string()).size(10)
     }
-    pub fn update(&mut self, message: Message) {
+    pub fn _update(&mut self, message: Message) {
         match message {
             Message::IncrementPressed => {
                 self.value += 1;

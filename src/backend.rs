@@ -1,11 +1,14 @@
+use cgmath::{Point2, Vector2};
 use iced_graphics::backend::{Backend, Text};
 use iced_graphics::Primitive;
-
 use libremarkable::framebuffer::{
-    common::{display_temp, dither_mode, mxcfb_rect, waveform_mode},
+    common::{
+        color::{BLACK, GRAY, RGB, WHITE},
+        display_temp, dither_mode, mxcfb_rect, waveform_mode,
+    },
     core::Framebuffer,
     refresh::PartialRefreshMode,
-    FramebufferBase, FramebufferRefresh,
+    FramebufferBase, FramebufferDraw, FramebufferRefresh,
 };
 
 pub const DISPLAYWIDTH: u16 = 1404;
@@ -39,10 +42,11 @@ impl Text for RemarkableBackend<'_> {
         font: iced_graphics::Font,
         bounds: iced_graphics::Size,
     ) -> (f32, f32) {
+        println!("measure",);
         dbg!(contents);
         dbg!(size);
         dbg!(&bounds);
-        (contents.len() as f32 * size, size)
+        (contents.len() as f32 * size * 0.5, size)
     }
 }
 
@@ -58,8 +62,68 @@ impl RemarkableBackend<'_> {
     pub fn new() -> Self {
         Self::default()
     }
+    pub fn clear(&mut self) {
+        self.framebuffer.clear();
+    }
     pub fn render(&mut self, primitive: &Primitive) {
-        dbg!(primitive);
+        match primitive {
+            Primitive::None => {}
+            Primitive::Group { primitives } => {
+                for primitive in primitives {
+                    println!("Group [ ------",);
+                    self.render(primitive);
+                    println!("] ------");
+                }
+            }
+            Primitive::Text {
+                content,
+                bounds,
+                color,
+                size,
+                font,
+                horizontal_alignment,
+                vertical_alignment,
+            } => {
+                self.framebuffer.draw_text(
+                    Point2::new(bounds.x, bounds.y + bounds.height - 6.0),
+                    content.clone(),
+                    *size,
+                    RGB(
+                        (color.r * 256.0) as u8,
+                        (color.g * 256.0) as u8,
+                        (color.b * 256.0) as u8,
+                    ),
+                    false,
+                );
+            }
+            Primitive::Quad {
+                bounds,
+                background,
+                border_radius,
+                border_width,
+                border_color,
+            } => self.framebuffer.draw_rect(
+                Point2::new(bounds.x as i32, bounds.y as i32),
+                Vector2::new(bounds.width as u32, bounds.height as u32),
+                2,
+                BLACK,
+            ),
+            Primitive::Image { handle, bounds } => {}
+            Primitive::Svg { handle, bounds } => {}
+            Primitive::Clip {
+                bounds,
+                offset,
+                content,
+            } => {}
+            Primitive::Translate {
+                translation,
+                content,
+            } => {
+                println!("translation",);
+            }
+            Primitive::Mesh2D { buffers, size } => {}
+            Primitive::Cached { cache } => println!("cache",),
+        }
     }
     pub fn update_full(&self) {
         self.framebuffer.full_refresh(

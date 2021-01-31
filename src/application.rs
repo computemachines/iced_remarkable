@@ -43,25 +43,28 @@ pub trait Application: Sized {
 
         spawn_command(command, &mut thread_pool, event_queue.clone());
 
-        const size: [u16; 2] = [DISPLAYWIDTH, DISPLAYHEIGHT];
+        const SIZE: [u16; 2] = [DISPLAYWIDTH, DISPLAYHEIGHT];
 
         let mut count = 0;
 
         loop {
             subscription_pool.update(state.subscription(), &mut thread_pool, event_queue.clone());
 
-            let mut state_view = state.view();
+            let state_view = state.view();
 
             let view: Element<'_, Self::Message, RemarkableRenderer> = Container::new(state_view)
-                .width(size[0].into())
-                .height(size[1].into())
+                .width(SIZE[0].into())
+                .height(SIZE[1].into())
                 .into();
 
             let mut ui =
-                UserInterface::build(view, size.into(), cache.take().unwrap(), &mut renderer);
+                UserInterface::build(view, SIZE.into(), cache.take().unwrap(), &mut renderer);
 
             let primitives = ui.draw(&mut renderer, Point::ORIGIN);
+            dbg!(&primitives);
+            renderer.backend_mut().clear();
             renderer.backend_mut().render(&primitives.0);
+            renderer.backend_mut().update_full();
 
             let mut messages = vec![];
             let mut evt_queue = event_queue.lock().expect("Poisoned lock");
@@ -72,11 +75,11 @@ pub trait Application: Sized {
 
             cache = Some(ui.into_cache());
 
-            // thread::sleep(Duration::from_millis(30));
-            // count += 1;
-            // if count > 10 {
-            //     break;
-            // }
+            thread::sleep(Duration::from_millis(100000));
+            count += 1;
+            if count >= 1 {
+                break;
+            }
         }
     }
 }
