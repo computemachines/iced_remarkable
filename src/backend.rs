@@ -1,26 +1,33 @@
 use cgmath::{Point2, Vector2};
 use iced_graphics::backend::{Backend, Text};
 use iced_graphics::Primitive;
-use libremarkable::framebuffer::{
-    common::{
-        color::{BLACK, GRAY, RGB, WHITE},
-        display_temp, dither_mode, mxcfb_rect, waveform_mode,
+use libremarkable::{
+    framebuffer::{
+        common::{
+            color::{BLACK, GRAY, RGB, WHITE},
+            display_temp, dither_mode, mxcfb_rect, waveform_mode,
+        },
+        core::Framebuffer,
+        refresh::PartialRefreshMode,
+        FramebufferBase, FramebufferDraw, FramebufferRefresh,
     },
-    core::Framebuffer,
-    refresh::PartialRefreshMode,
-    FramebufferBase, FramebufferDraw, FramebufferRefresh,
+    input::{ev::EvDevContext, InputDevice, InputEvent},
 };
+use log;
+use logging_timer::{stime, time};
+use std::sync::mpsc::Receiver;
 
 pub const DISPLAYWIDTH: u16 = 1404;
 pub const DISPLAYHEIGHT: u16 = 1872;
 
 pub struct RemarkableBackend<'a> {
     framebuffer: Framebuffer<'a>,
+    pub input_rx: Receiver<InputEvent>,
 }
 
 impl Backend for RemarkableBackend<'_> {
     fn trim_measurements(&mut self) {
-        println!("trim measurement cache?",);
+        log::info!("trim measurement cache?",);
     }
 }
 
@@ -32,6 +39,7 @@ impl Text for RemarkableBackend<'_> {
     const ARROW_DOWN_ICON: char = 'V';
 
     fn default_size(&self) -> u16 {
+        // log::info!("default_size()");
         60
     }
 
@@ -42,25 +50,21 @@ impl Text for RemarkableBackend<'_> {
         font: iced_graphics::Font,
         bounds: iced_graphics::Size,
     ) -> (f32, f32) {
-        println!("measure",);
-        dbg!(contents);
-        dbg!(size);
-        dbg!(&bounds);
+        log::info!("measure {:?}", contents);
         (contents.len() as f32 * size * 0.5, size)
-    }
-}
-
-impl Default for RemarkableBackend<'_> {
-    fn default() -> Self {
-        Self {
-            framebuffer: Framebuffer::new("/dev/fb0"),
-        }
     }
 }
 
 impl RemarkableBackend<'_> {
     pub fn new() -> Self {
-        Self::default()
+        let (input_tx, input_rx) = std::sync::mpsc::channel::<InputEvent>();
+        EvDevContext::new(InputDevice::GPIO, input_tx.clone()).start();
+        EvDevContext::new(InputDevice::Multitouch, input_tx.clone()).start();
+        EvDevContext::new(InputDevice::Wacom, input_tx.clone()).start();
+        Self {
+            framebuffer: Framebuffer::from_path("/dev/fb0"),
+            input_rx,
+        }
     }
     pub fn clear(&mut self) {
         self.framebuffer.clear();
@@ -70,9 +74,7 @@ impl RemarkableBackend<'_> {
             Primitive::None => {}
             Primitive::Group { primitives } => {
                 for primitive in primitives {
-                    println!("Group [ ------",);
                     self.render(primitive);
-                    println!("] ------");
                 }
             }
             Primitive::Text {
@@ -119,19 +121,20 @@ impl RemarkableBackend<'_> {
                 translation,
                 content,
             } => {
-                println!("translation",);
+                unimplemented!("translation",);
             }
             Primitive::Mesh2D { buffers, size } => {}
-            Primitive::Cached { cache } => println!("cache",),
+            Primitive::Cached { cache } => unimplemented!("cache",),
         }
     }
+    // #[stime]
     pub fn update_full(&self) {
         self.framebuffer.full_refresh(
             waveform_mode::WAVEFORM_MODE_GC16,
             display_temp::TEMP_USE_REMARKABLE_DRAW,
             dither_mode::EPDC_FLAG_USE_REMARKABLE_DITHER,
             0,
-            true,
+            false,
         );
     }
     pub fn update_partial(&self, region: &mxcfb_rect) {

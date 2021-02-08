@@ -1,5 +1,6 @@
 use iced_native::Command;
 use iced_remarkable::application::Application;
+use log;
 
 mod counter;
 
@@ -11,7 +12,7 @@ impl Application for CounterApp {
     type Message = counter::Message;
 
     fn new() -> (Self, iced_native::Command<Self::Message>) {
-        println!("CounterApp.new",);
+        log::info!("CounterApp.new",);
         (
             CounterApp {
                 counter: counter::Counter::new(),
@@ -20,11 +21,11 @@ impl Application for CounterApp {
         )
     }
 
-    fn update(
-        &mut self,
-        _messages: Vec<Self::Message>,
-    ) -> Vec<iced_native::Command<Self::Message>> {
-        println!("counterApp.update",);
+    fn update(&mut self, messages: Vec<Self::Message>) -> Vec<iced_native::Command<Self::Message>> {
+        log::info!("counterApp.update",);
+        for message in messages {
+            self.counter.update(message);
+        }
         vec![]
     }
 

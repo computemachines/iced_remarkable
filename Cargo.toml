@@ -11,9 +11,12 @@ iced_core = "0.3.0"
 iced_native = "0.3.0"
 iced_graphics = "0.1.0"
 cgmath = "0.17.0"
+simple_logger = "1.11.0"
+logging_timer = "1.0.0"
+log = "0.4.14"
 
 [workspace]
 members = ["examples/counter"]
 
 [target.armv7-unknown-linux-gnueabihf.dependencies]
-libremarkable = "0.4.1"
+libremarkable = "0.4.3"

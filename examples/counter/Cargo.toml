@@ -12,3 +12,4 @@ publish = false
 iced_native = "0.3.0"
 iced_graphics = "0.1.0"
 iced_remarkable = { path = "../.." }
+log = "0.4.14"

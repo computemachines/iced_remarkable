@@ -39,7 +39,7 @@ impl Counter {
             )
         // Text::new(&self.value.to_string()).size(10)
     }
-    pub fn _update(&mut self, message: Message) {
+    pub fn update(&mut self, message: Message) {
         match message {
             Message::IncrementPressed => {
                 self.value += 1;
