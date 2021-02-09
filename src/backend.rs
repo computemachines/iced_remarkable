@@ -127,14 +127,14 @@ impl RemarkableBackend<'_> {
             Primitive::Cached { cache } => unimplemented!("cache",),
         }
     }
-    // #[stime]
+    #[stime]
     pub fn update_full(&self) {
         self.framebuffer.full_refresh(
             waveform_mode::WAVEFORM_MODE_GC16,
             display_temp::TEMP_USE_REMARKABLE_DRAW,
             dither_mode::EPDC_FLAG_USE_REMARKABLE_DITHER,
             0,
-            false,
+            true,
         );
     }
     pub fn update_partial(&self, region: &mxcfb_rect) {

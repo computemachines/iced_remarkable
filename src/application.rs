@@ -1,5 +1,7 @@
 use std::{
-    collections::VecDeque,
+    borrow::Borrow,
+    collections::{binary_heap::Iter, VecDeque},
+    iter,
     sync::{Arc, Mutex},
     thread,
     time::Duration,
@@ -77,10 +79,16 @@ pub trait Application: Sized {
             renderer.backend_mut().render(&primitives.0);
             renderer.backend_mut().update_full();
 
-            let events = renderer
-                .backend_mut()
-                .input_rx
-                .try_iter()
+            let receiver = renderer.backend_mut().input_rx.borrow();
+
+            let events: Box<dyn Iterator<Item = InputEvent>> =
+                if let Ok(first) = receiver.recv_timeout(Duration::from_millis(10000)) {
+                    Box::new(iter::once(first).chain(receiver.try_iter()))
+                } else {
+                    Box::new(iter::empty())
+                };
+
+            let events = events
                 .map(|e| match e {
                     InputEvent::WacomEvent { event } => unimplemented!("WacomEvent"),
                     InputEvent::MultitouchEvent { event } => (
@@ -107,6 +115,9 @@ pub trait Application: Sized {
                     InputEvent::Unknown {} => panic!("Unknown InputEvent"),
                 })
                 .collect::<Vec<(Event, Option<Finger>)>>();
+            // |_| iter::empty::<(Event, Option<Finger>)>(),
+            dbg!(&events);
+
             let mut messages = vec![];
             for (event, finger) in events {
                 let single_event = [event];
@@ -135,12 +146,6 @@ pub trait Application: Sized {
                 for command in commands {
                     spawn_command(command, &mut thread_pool, event_queue.clone());
                 }
-            }
-
-            thread::sleep(Duration::from_millis(1000));
-            count += 1;
-            if count >= 10 {
-                break;
             }
         }
     }
