@@ -8,7 +8,7 @@ use std::{
 };
 
 use iced_core::Point;
-use iced_graphics::Renderer;
+use iced_graphics::{Primitive, Renderer};
 use iced_native::{
     futures, mouse, Cache, Command, Container, Element, Event, Subscription, UserInterface,
 };
@@ -57,9 +57,10 @@ pub trait Application: Sized {
 
         const SIZE: [u16; 2] = [DISPLAYWIDTH, DISPLAYHEIGHT];
 
-        let mut count = 0;
+        let mut old_primitive = Primitive::None;
 
-        loop {
+        for _ in 0..2 {
+            log::info!("begin ui loop");
             subscription_pool.update(state.subscription(), &mut thread_pool, event_queue.clone());
 
             let state_view = state.view();
@@ -73,16 +74,17 @@ pub trait Application: Sized {
                 UserInterface::build(view, SIZE.into(), cache.take().unwrap(), &mut renderer);
 
             let primitives = ui.draw(&mut renderer, Point::ORIGIN);
-            // dbg!(&primitives);
             renderer.backend_mut().clear();
 
-            renderer.backend_mut().render(&primitives.0);
+            renderer.backend_mut().render(&primitives.0, &old_primitive);
+            return;
+            old_primitive = primitives.0;
             renderer.backend_mut().update_full();
 
             let receiver = renderer.backend_mut().input_rx.borrow();
 
             let events: Box<dyn Iterator<Item = InputEvent>> =
-                if let Ok(first) = receiver.recv_timeout(Duration::from_millis(10000)) {
+                if let Ok(first) = receiver.recv_timeout(Duration::from_millis(1000)) {
                     Box::new(iter::once(first).chain(receiver.try_iter()))
                 } else {
                     Box::new(iter::empty())
@@ -115,8 +117,6 @@ pub trait Application: Sized {
                     InputEvent::Unknown {} => panic!("Unknown InputEvent"),
                 })
                 .collect::<Vec<(Event, Option<Finger>)>>();
-            // |_| iter::empty::<(Event, Option<Finger>)>(),
-            dbg!(&events);
 
             let mut messages = vec![];
             for (event, finger) in events {
@@ -132,7 +132,6 @@ pub trait Application: Sized {
                     &mut messages,
                 );
             }
-            dbg!(&messages);
             let mut evt_queue = event_queue.lock().expect("Poisoned lock");
             let mut events = evt_queue.take().unwrap();
             messages.append(&mut events.drain(..).collect());

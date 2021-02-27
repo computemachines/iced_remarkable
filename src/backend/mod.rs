@@ -1,4 +1,5 @@
 use cgmath::{Point2, Vector2};
+use iced_core::{Point, Rectangle, Vector};
 use iced_graphics::backend::{Backend, Text};
 use iced_graphics::Primitive;
 use libremarkable::{
@@ -15,7 +16,10 @@ use libremarkable::{
 };
 use log;
 use logging_timer::{stime, time};
-use std::sync::mpsc::Receiver;
+use std::{cell::RefCell, sync::mpsc::Receiver};
+mod primitive_utils;
+use primitive_utils::primitive_children;
+mod bvh;
 
 pub const DISPLAYWIDTH: u16 = 1404;
 pub const DISPLAYHEIGHT: u16 = 1872;
@@ -50,7 +54,7 @@ impl Text for RemarkableBackend<'_> {
         font: iced_graphics::Font,
         bounds: iced_graphics::Size,
     ) -> (f32, f32) {
-        log::info!("measure {:?}", contents);
+        // log::info!("measure {:?}", contents);
         (contents.len() as f32 * size * 0.5, size)
     }
 }
@@ -69,64 +73,39 @@ impl RemarkableBackend<'_> {
     pub fn clear(&mut self) {
         self.framebuffer.clear();
     }
-    pub fn render(&mut self, primitive: &Primitive) {
-        match primitive {
-            Primitive::None => {}
-            Primitive::Group { primitives } => {
-                for primitive in primitives {
-                    self.render(primitive);
+    pub fn render(&mut self, root: &Primitive, cached: &Primitive) {
+        let mut stack = vec![(root, Vector::new(0f32, 0f32))];
+        let mut bvh = bvh::Node::BoundingBox {
+            children: vec![],
+            region: Rectangle::new(
+                iced_core::Point::new(0f32, 0f32),
+                iced_core::Size::new(DISPLAYWIDTH as f32, DISPLAYHEIGHT as f32),
+            ),
+        };
+
+        // an iterator would be more idiomatic here
+        while let Some((parent, origin)) = stack.pop() {
+            // log::debug!("parent = {:?}", parent);
+            for primitive in primitive_children(parent) {
+                match primitive {
+                    // ---- Group Primitives ----
+                    Primitive::Translate {
+                        translation,
+                        content,
+                    } => stack.push((content, (origin + *translation))),
+                    Primitive::Group { primitives } => {
+                        stack.extend(primitives.iter().map(|p| (p, origin)))
+                    }
+                    Primitive::Cached { cache } => unimplemented!(),
+
+                    // ---- Leaf Primitives ----
+                    _ => bvh.insert_unchecked(primitive),
                 }
             }
-            Primitive::Text {
-                content,
-                bounds,
-                color,
-                size,
-                font,
-                horizontal_alignment,
-                vertical_alignment,
-            } => {
-                self.framebuffer.draw_text(
-                    Point2::new(bounds.x, bounds.y + bounds.height - 6.0),
-                    content.clone(),
-                    *size,
-                    RGB(
-                        (color.r * 256.0) as u8,
-                        (color.g * 256.0) as u8,
-                        (color.b * 256.0) as u8,
-                    ),
-                    false,
-                );
-            }
-            Primitive::Quad {
-                bounds,
-                background,
-                border_radius,
-                border_width,
-                border_color,
-            } => self.framebuffer.draw_rect(
-                Point2::new(bounds.x as i32, bounds.y as i32),
-                Vector2::new(bounds.width as u32, bounds.height as u32),
-                2,
-                BLACK,
-            ),
-            Primitive::Image { handle, bounds } => {}
-            Primitive::Svg { handle, bounds } => {}
-            Primitive::Clip {
-                bounds,
-                offset,
-                content,
-            } => {}
-            Primitive::Translate {
-                translation,
-                content,
-            } => {
-                unimplemented!("translation",);
-            }
-            Primitive::Mesh2D { buffers, size } => {}
-            Primitive::Cached { cache } => unimplemented!("cache",),
         }
+        dbg!(bvh);
     }
+
     #[stime]
     pub fn update_full(&self) {
         self.framebuffer.full_refresh(

@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 TARGET := ./target/armv7-unknown-linux-gnueabihf/release/counter
-SRC = ./src/*.rs ./examples/*/src/*.rs
+SRC = ./src/*.rs ./examples/*/src/*.rs ./src/backend/*.rs
 
 .PHONY: build install uninstall run clean
 
